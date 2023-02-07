@@ -1,9 +1,10 @@
 import { useState } from "react";
-import { ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
+import { Alert, ScrollView, Text, TextInput, TouchableOpacity, View } from "react-native";
 import { Feather } from '@expo/vector-icons'
 import { BackButton } from "../components/BackButton";
 import { CheckBox } from "../components/Checkbox";
 import colors from "tailwindcss/colors";
+import { api } from "../lib/axios";
 
 const availableWeekDays = [
   'Domingo', 
@@ -16,14 +17,35 @@ const availableWeekDays = [
 ]
 
 export function New() {
+  const [title, setTitle] = useState('')
   const [weekDays, setWeekDays] = useState<number[]>([])
 
   function handleToggleWeekDay(weekDayIndex: number) {
-    console.log(weekDayIndex)
     if(weekDays.includes(weekDayIndex)) {
       setWeekDays(state => state.filter(weekDay => weekDay !== weekDayIndex));
     } else {
       setWeekDays(state => [...state, weekDayIndex]);
+    }
+  }
+
+  async function handleCreateNewHabit() {
+    try {
+      if (!title.trim() || weekDays.length === 0) {
+        Alert.alert('Novo Hábito', 'Informe o nome do hábito e escolha um dia da semana')
+      }
+
+      await api.post('/habits', {
+        title,
+        weekDays
+      })
+
+      setTitle('')
+      setWeekDays([])
+
+      Alert.alert('Novo hábito', 'Hábito criado com sucesso')
+    } catch (error) {
+        console.log(error)
+        Alert.alert('Ops', 'Não foi possível criar o novo hábito')
     }
   }
 
@@ -42,6 +64,8 @@ export function New() {
         <TextInput 
           placeholder="Exercícios, Dormir bem, etc..."
           placeholderTextColor={colors.zinc[400]}
+          onChangeText={text => setTitle(text)}
+          value={title}
           className="h-12 pl-4 rounded-lg mt-3 bg-zinc-900 text-white focus:border-2 border-2 border-zinc-800 focus:border-green-600"
         />
 
@@ -60,6 +84,7 @@ export function New() {
 
         <TouchableOpacity 
           className="w-full h-14 flex-row items-center justify-center bg-green-600 rounded-md focus:border-green-600 mt-6" 
+          onPress={handleCreateNewHabit}
           activeOpacity={0.7}
         >
           <Feather name="check" size={20} color={colors.white} />
